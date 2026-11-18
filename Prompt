@@ -1,0 +1,21 @@
+Create a detailed, interactive Buy vs Rent Financial Simulator in HTML that helps evaluate whether buying a ₹2 crore flat or renting a similar property is the better long-term financial decision.
+Initial assumptions:
+
+- Property price: ₹2 crore
+- Home loan: ₹1.5 crore at 8% annual interest
+- Down payment: ₹50 lakh
+- Monthly rent: ₹50,000
+
+In the renting scenario, invest the ₹50 lakh down payment and the monthly difference between the home loan EMI and rent into mutual funds, PPF, equity, or other investments.
+Build a user-friendly simulator with adjustable inputs for loan tenure, interest rates, rent inflation, property appreciation, investment returns, maintenance costs, taxes, and other relevant expenses.
+
+Key features:
+
+Compare the long-term net worth of buying vs renting over 5, 10, 15, 20, and 30 years.
+Include detailed year-wise financial projections and interactive charts.
+Allow different investment strategies and expected returns.
+Account for inflation, loan amortisation, stamp duty, registration, and property maintenance.
+Show total costs, investment corpus, outstanding loan, property value, and final net worth.
+Highlight the break-even point where buying becomes financially better than renting.
+Use realistic Indian financial assumptions (₹), provide clear explanations of calculations, and include critical financial insights and considerations that people often overlook when deciding whether to buy or rent.
+Make the HTML self-contained, visually appealing, responsive, and easy to run locally in a browser.
