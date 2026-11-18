@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Buy vs Rent — India Financial Simulator</title>
+<style>
+:root{--bg:#f4f6fb;--panel:#fff;--ink:#172033;--muted:#667085;--line:#e5e9f2;--blue:#315efb;--teal:#079b83;--orange:#e58b2a;--red:#d64b5d;--shadow:0 8px 28px rgba(27,39,75,.07)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial}
+header{background:linear-gradient(120deg,#14264b,#315efb);color:#fff;padding:30px max(22px,calc((100% - 1320px)/2)) 26px}
+header h1{margin:0 0 8px;font-size:clamp(25px,4vw,36px);letter-spacing:-.7px}header p{margin:0;color:#dbe4ff;max-width:850px}
+.wrap{max-width:1320px;margin:auto;padding:22px}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:18px}
+button,.btn{border:0;border-radius:10px;padding:10px 14px;font-weight:650;cursor:pointer;background:var(--blue);color:white}
+button.secondary{background:#e9edff;color:#2346c8}button.ghost{background:#fff;color:#344054;border:1px solid var(--line)}
+.layout{display:grid;grid-template-columns:340px minmax(0,1fr);gap:18px;align-items:start}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow)}
+.inputs{padding:18px;position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto}
+h2{font-size:18px;margin:0 0 14px}h3{font-size:15px;margin:18px 0 9px}
+.group-title{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#75809a;font-weight:800;margin:20px 0 9px}
+.field{display:grid;grid-template-columns:1fr 112px;gap:10px;align-items:center;margin:10px 0}
+.field label{font-size:13px;color:#475467}.field input,.field select{width:100%;border:1px solid #d8deea;border-radius:8px;padding:8px 9px;color:var(--ink);background:#fff;font:inherit;font-size:13px}
+.field small{display:block;color:#98a2b3;font-size:11px}.unit{position:relative}.unit span{position:absolute;right:9px;top:8px;color:#98a2b3;font-size:11px;pointer-events:none}
+.field input[type=number]{padding-right:28px}
+.main{display:grid;gap:18px;min-width:0}
+.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.metric{padding:16px}.metric .k{font-size:12px;color:var(--muted);margin-bottom:6px}.metric .v{font-size:clamp(19px,2vw,25px);font-weight:800;letter-spacing:-.6px}.metric .sub{font-size:11px;color:var(--muted);margin-top:4px}
+.winner{border-left:4px solid var(--teal)}.warning{border-left:4px solid var(--orange)}
+.two{display:grid;grid-template-columns:1.15fr .85fr;gap:18px}
+.chart-panel{padding:18px;min-width:0}.chart-head{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}.chart-head p{margin:0;color:var(--muted);font-size:12px}
+canvas{width:100%;height:290px;display:block;margin-top:12px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted)}.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px}
+.table-panel{padding:18px;overflow:hidden}.table-scroll{overflow:auto;max-height:480px}
+table{width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap}th,td{padding:10px 9px;text-align:right;border-bottom:1px solid var(--line)}th{position:sticky;top:0;background:#f8f9fc;color:#475467;font-weight:750}th:first-child,td:first-child{text-align:left}tr:last-child td{border-bottom:0}
+.insights{padding:18px}.insight-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.insight{padding:13px;border:1px solid var(--line);border-radius:12px;background:#fbfcff}.insight b{display:block;margin-bottom:4px}.insight p{margin:0;color:#667085;font-size:13px}
+.note{padding:15px 17px;background:#fff8eb;border:1px solid #f3dfb9;border-radius:12px;color:#76501c;font-size:13px}
+details{border-top:1px solid var(--line);padding-top:12px;margin-top:14px}summary{cursor:pointer;font-weight:700;font-size:13px}
+.footer{font-size:12px;color:var(--muted);padding:4px 2px 28px}
+.pill{display:inline-block;border-radius:30px;background:#eef2ff;color:#3152d8;padding:4px 9px;font-size:11px;font-weight:750}
+@media(max-width:1050px){.layout{grid-template-columns:300px minmax(0,1fr)}.cards{grid-template-columns:repeat(2,1fr)}.two{grid-template-columns:1fr}}
+@media(max-width:760px){.wrap{padding:13px}.layout{grid-template-columns:1fr}.inputs{position:static;max-height:none}.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.insight-grid{grid-template-columns:1fr}canvas{height:250px}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Buy vs Rent Financial Simulator</h1>
+  <p>Compare the long-term wealth impact of purchasing a ₹2 crore home with a loan versus renting a similar home and investing the capital and monthly cash-flow difference. All values are estimates in Indian rupees.</p>
+</header>
+<div class="wrap">
+  <div class="toolbar">
+    <span class="pill">India · INR · Monthly cash flows</span>
+    <button class="secondary" id="reset">Reset assumptions</button>
+    <button class="ghost" id="download">Download year-wise CSV</button>
+    <button class="ghost" onclick="window.print()">Print / Save PDF</button>
+  </div>
+  <div class="layout">
+    <aside class="panel inputs">
+      <h2>Adjust assumptions</h2>
+      <div class="group-title">Property & financing</div>
+      <div class="field"><label for="price">Property price</label><div class="unit"><input id="price" type="number" value="20000000" step="100000"><span>₹</span></div></div>
+      <div class="field"><label for="loan">Home loan amount</label><div class="unit"><input id="loan" type="number" value="15000000" step="100000"><span>₹</span></div></div>
+      <div class="field"><label for="rate">Loan interest rate</label><div class="unit"><input id="rate" type="number" value="8" step=".1"><span>% p.a.</span></div></div>
+      <div class="field"><label for="tenure">Loan tenure</label><div class="unit"><input id="tenure" type="number" value="20" min="1" max="30"><span>years</span></div></div>
+      <div class="field"><label for="horizon">Comparison period</label><div class="unit"><select id="horizon"><option>5</option><option>10</option><option>15</option><option selected>20</option><option>30</option></select></div></div>
+      <div class="field"><label for="stamp">Stamp duty + registration</label><div class="unit"><input id="stamp" type="number" value="7" step=".25"><span>% price</span></div></div>
+      <div class="field"><label for="buyOther">Other purchase costs</label><div class="unit"><input id="buyOther" type="number" value="150000" step="10000"><span>₹</span></div></div>
+      <div class="group-title">Rent & property costs</div>
+      <div class="field"><label for="rent">Initial monthly rent</label><div class="unit"><input id="rent" type="number" value="50000" step="1000"><span>₹</span></div></div>
+      <div class="field"><label for="rentInfl">Annual rent increase</label><div class="unit"><input id="rentInfl" type="number" value="5" step=".25"><span>%</span></div></div>
+      <div class="field"><label for="appreciation">Property appreciation</label><div class="unit"><input id="appreciation" type="number" value="5" step=".25"><span>% p.a.</span></div></div>
+      <div class="field"><label for="maintenance">Annual maintenance (year 1)</label><div class="unit"><input id="maintenance" type="number" value="60000" step="5000"><span>₹</span></div></div>
+      <div class="field"><label for="maintInfl">Maintenance inflation</label><div class="unit"><input id="maintInfl" type="number" value="6" step=".25"><span>% p.a.</span></div></div>
+      <div class="field"><label for="propertyTax">Annual property tax</label><div class="unit"><input id="propertyTax" type="number" value="20000" step="1000"><span>₹</span></div></div>
+      <div class="group-title">Investment strategy</div>
+      <div class="field"><label for="return">Expected investment return</label><div class="unit"><input id="return" type="number" value="10" step=".25"><span>% p.a.</span></div></div>
+      <div class="field"><label for="strategy">Investment mix</label><div class="unit"><select id="strategy"><option value="custom">Custom blended return</option><option value="conservative">Conservative (6.5%)</option><option value="balanced">Balanced (9%)</option><option value="equity">Equity-heavy (11.5%)</option></select></div></div>
+      <div class="field"><label for="investTax">Tax on investment gains</label><div class="unit"><input id="investTax" type="number" value="12.5" step=".5"><span>% gains</span></div></div>
+      <div class="field"><label for="inflation">General inflation</label><div class="unit"><input id="inflation" type="number" value="5" step=".25"><span>% p.a.</span></div></div>
+      <div class="group-title">Tax & ownership assumptions</div>
+      <div class="field"><label for="taxBenefit">Annual tax benefit on loan</label><div class="unit"><input id="taxBenefit" type="number" value="0" step="5000"><span>₹</span></div></div>
+      <div class="field"><label for="saleCost">Selling cost at exit</label><div class="unit"><input id="saleCost" type="number" value="2" step=".25"><span>% value</span></div></div>
+      <div class="field"><label for="rentDeposit">Refundable rental deposit</label><div class="unit"><input id="rentDeposit" type="number" value="300000" step="10000"><span>₹</span></div></div>
+      <details>
+        <summary>How the simulator treats cash flows</summary>
+        <p style="font-size:12px;color:#667085">Buyer pays down payment, stamp/registration and other purchase costs at the start; EMI, maintenance and property tax during ownership. Renter invests the buyer's initial cash outlay and invests the monthly amount by which buyer costs exceed rent. If renting costs more in a month, the model withdraws from the portfolio. Investment gains are taxed on liquidation at the selected effective rate. Rental deposit is treated as refundable capital tied up, not an expense.</p>
+      </details>
+    </aside>
+    <main class="main">
+      <section class="cards">
+        <div class="panel metric winner"><div class="k">Buyer's net worth at horizon</div><div class="v" id="buyNW">—</div><div class="sub" id="buySub">Property equity less exit costs</div></div>
+        <div class="panel metric"><div class="k">Renter's net worth at horizon</div><div class="v" id="rentNW">—</div><div class="sub">Investment corpus after estimated gains tax</div></div>
+        <div class="panel metric"><div class="k">Financial advantage</div><div class="v" id="difference">—</div><div class="sub" id="winnerText">—</div></div>
+        <div class="panel metric warning"><div class="k">Break-even year</div><div class="v" id="breakEven">—</div><div class="sub">First year buyer's net worth exceeds renter's</div></div>
+      </section>
+      <section class="two">
+        <div class="panel chart-panel">
+          <div class="chart-head"><div><h2>Net worth over time</h2><p>Nominal rupees; after estimated exit taxes/costs</p></div><span class="pill" id="chartHorizon">20-year view</span></div>
+          <div class="legend"><span><i class="dot" style="background:#315efb"></i>Buy</span><span><i class="dot" style="background:#079b83"></i>Rent + invest</span></div>
+          <canvas id="wealthChart" aria-label="Net worth comparison chart"></canvas>
+        </div>
+        <div class="panel chart-panel">
+          <div class="chart-head"><div><h2>What drives the outcome?</h2><p>At selected comparison horizon</p></div></div>
+          <canvas id="compositionChart" aria-label="Net worth composition chart"></canvas>
+          <div class="legend"><span><i class="dot" style="background:#315efb"></i>Property value / investment corpus</span><span><i class="dot" style="background:#e58b2a"></i>Debt / exit deductions</span></div>
+        </div>
+      </section>
+      <section class="panel table-panel">
+        <div class="chart-head"><div><h2>Milestone comparison</h2><p>Compare the standard 5, 10, 15, 20 and 30-year checkpoints</p></div></div>
+        <div class="table-scroll"><table id="milestones"><thead><tr><th>Year</th><th>Property value</th><th>Loan outstanding</th><th>Buy net worth</th><th>Renter corpus*</th><th>Renter net worth</th><th>Winner</th></tr></thead><tbody></tbody></table></div>
+        <p style="font-size:11px;color:#98a2b3;margin:9px 0 0">*Renter corpus before estimated capital-gains tax. Values are nominal and rounded.</p>
+      </section>
+      <section class="panel table-panel">
+        <div class="chart-head"><div><h2>Year-wise financial projection</h2><p>Expand each year to inspect costs, investing and loan amortisation</p></div><button class="ghost" id="showAll">Show all years</button></div>
+        <div class="table-scroll"><table id="annual"><thead><tr><th>Year</th><th>Rent / year</th><th>EMI / year</th><th>Owner upkeep</th><th>Interest paid</th><th>Principal repaid</th><th>Property value</th><th>Loan balance</th><th>Investment corpus</th><th>Buy NW</th><th>Rent NW</th></tr></thead><tbody></tbody></table></div>
+      </section>
+      <section class="panel insights">
+        <h2>Critical financial insights</h2>
+        <div class="insight-grid" id="insights"></div>
+      </section>
+      <div class="note"><b>Important:</b> This is a scenario model, not personalised financial, tax or legal advice. Returns, property appreciation and rent escalation are uncertain. Actual home-loan tax deductions depend on tax regime, ownership, occupancy, loan purpose and prevailing law. Do not assume a tax benefit unless verified for your circumstances.</div>
+      <div class="footer">Model limitations: simplified monthly amortisation and monthly investment contributions; annual rent/maintenance escalation; no leverage refinancing, vacancy, major repairs, furnishing, brokerage on rent, capital-gains exemptions, reinvestment tax drag, asset-allocation volatility, or opportunity cost of future salary changes unless entered in assumptions. Investment gain tax is an effective-rate approximation, not a tax calculation.</div>
+    </main>
+  </div>
+</div>
+<script>
+const ids=['price','loan','rate','tenure','horizon','stamp','buyOther','rent','rentInfl','appreciation','maintenance','maintInfl','propertyTax','return','strategy','investTax','inflation','taxBenefit','saleCost','rentDeposit'];
+const defaults={price:20000000,loan:15000000,rate:8,tenure:20,horizon:20,stamp:7,buyOther:150000,rent:50000,rentInfl:5,appreciation:5,maintenance:60000,maintInfl:6,propertyTax:20000,return:10,strategy:'custom',investTax:12.5,inflation:5,taxBenefit:0,saleCost:2,rentDeposit:300000};
+const $=id=>document.getElementById(id), n=id=>Math.max(0,Number($(id).value)||0), pct=id=>n(id)/100;
+const money=v=>{let a=Math.abs(v),s=v<0?'-':'';if(a>=1e7)return s+'₹'+(a/1e7).toFixed(2)+' Cr';if(a>=1e5)return s+'₹'+(a/1e5).toFixed(2)+' L';return s+'₹'+Math.round(a).toLocaleString('en-IN')};
+const fmt=v=>'₹'+Math.round(v).toLocaleString('en-IN');
+let latest=[];
+function calc(){
+ let price=n('price'),loan=Math.min(n('loan'),price),down=price-loan,rate=pct('rate')/12,months=Math.round(n('tenure')*12),h=Math.max(1,Math.min(30,n('horizon')));
+ let emi=rate===0?loan/months:loan*rate*Math.pow(1+rate,months)/(Math.pow(1+rate,months)-1);
+ let invRate=pct('return');if($('strategy').value!=='custom')invRate={conservative:.065,balanced:.09,equity:.115}[$('strategy').value];
+ let monthlyInvRate=Math.pow(1+invRate,1/12)-1,bal=loan,corpus=0;
+ const upfront=down+price*pct('stamp')+n('buyOther');
+ const renterInitial=upfront+n('rentDeposit');corpus=renterInitial;
+ let rows=[{year:0,property:price,bal:loan,corpus,investTax:0,buyNW:price-loan-price*pct('saleCost'),rentNW:corpus, rent:0,emi:0,upkeep:0,interest:0,principal:0,ownerCost:0}];
+ let cumulativeRent=0,cumulativeOwner=0,firstBE=null;
+ for(let y=1;y<=30;y++){
+   let rentAnnual=0,interest=0,principal=0,emiPaid=0,ownerUpkeep=0;
+   for(let m=1;m<=12;m++){
+     let global=(y-1)*12+m;
+     let rmonth=n('rent')*Math.pow(1+pct('rentInfl'),(global-1)/12);
+     rentAnnual+=rmonth;
+     let im=0,pm=0,em=0;
+     if(global<=months && bal>0){im=bal*rate;pm=Math.min(bal,emi-im);em=im+pm;bal-=pm;}
+     interest+=im;principal+=pm;emiPaid+=em;
+     let upkeep=(n('maintenance')+n('propertyTax'))*Math.pow(1+pct('maintInfl'),y-1)/12;
+     ownerUpkeep+=upkeep;
+     // Rent case invests initial owner cash outlay and monthly owner cash-flow savings.
+     corpus*=1+monthlyInvRate;
+     let delta=(em+upkeep)-rmonth;
+     corpus+=delta;
+     if(corpus<0) corpus=0;
+   }
+   cumulativeRent+=rentAnnual;cumulativeOwner+=emiPaid+ownerUpkeep;
+   let property=price*Math.pow(1+pct('appreciation'),y);
+   let saleDed=property*pct('saleCost');
+   let buyNW=property-bal-saleDed;
+   let gains=Math.max(0,corpus-renterInitial);
+   let rentNW=corpus-gains*pct('investTax');
+   let row={year:y,property,bal,corpus,buyNW,rentNW,rent:rentAnnual,emi:emiPaid,upkeep:ownerUpkeep,interest,principal,ownerCost:emiPaid+ownerUpkeep, cumulativeRent,cumulativeOwner};
+   rows.push(row);
+   if(firstBE===null && buyNW>rentNW)firstBE=y;
+ }
+ latest=rows;
+ const r=rows[h], diff=r.buyNW-r.rentNW;
+ $('buyNW').textContent=money(r.buyNW);$('rentNW').textContent=money(r.rentNW);
+ $('difference').textContent=money(Math.abs(diff));$('winnerText').textContent=diff>0?'Buying leads by '+money(diff):diff<0?'Renting leads by '+money(-diff):'Approximately equal';
+ $('breakEven').textContent=firstBE===null?'Not in 30y':'Year '+firstBE;
+ $('chartHorizon').textContent=h+'-year view';
+ renderWealth(rows);renderComposition(r);renderMilestones(rows);renderAnnual(rows,h);renderInsights(rows,r,emi,upfront,firstBE,invRate);
+}
+function canvasSetup(c){let dpr=window.devicePixelRatio||1,w=c.clientWidth,h=c.clientHeight;c.width=w*dpr;c.height=h*dpr;let x=c.getContext('2d');x.scale(dpr,dpr);return{x,w,h};}
+function renderWealth(rows){
+ let {x,w,h}=canvasSetup($('wealthChart')),data=rows.filter(r=>r.year<=30),max=Math.max(1,...data.map(r=>Math.max(r.buyNW,r.rentNW))),min=Math.min(0,...data.map(r=>Math.min(r.buyNW,r.rentNW)));
+ let L=58,R=12,T=15,B=32,pw=w-L-R,ph=h-T-B;
+ x.clearRect(0,0,w,h);x.font='11px system-ui';x.fillStyle='#7b8498';x.strokeStyle='#e9edf4';
+ for(let i=0;i<=4;i++){let val=min+(max-min)*i/4,y=T+ph*(1-i/4);x.beginPath();x.moveTo(L,y);x.lineTo(w-R,y);x.stroke();x.fillText(money(val),2,y+4);}
+ const px=i=>L+pw*i/30,py=v=>T+ph*(1-(v-min)/(max-min||1));
+ [[r=>r.buyNW,'#315efb'],[r=>r.rentNW,'#079b83']].forEach(([f,col])=>{x.beginPath();data.forEach((r,i)=>i?x.lineTo(px(i),py(f(r))):x.moveTo(px(i),py(f(r))));x.strokeStyle=col;x.lineWidth=3;x.stroke();});
+ [0,5,10,15,20,25,30].forEach(i=>{x.fillStyle='#7b8498';x.fillText(i+'y',px(i)-8,h-8)});
+}
+function renderComposition(r){
+ let {x,w,h}=canvasSetup($('compositionChart'));x.clearRect(0,0,w,h);
+ let items=[{label:'Buy: property equity',v:Math.max(0,r.property-r.bal),c:'#315efb'},{label:'Buy: sale cost',v:r.property*pct('saleCost'),c:'#e58b2a'},{label:'Rent: invested corpus',v:Math.max(0,r.corpus),c:'#079b83'}];
+ let max=Math.max(1,...items.map(a=>a.v));x.font='12px system-ui';
+ items.forEach((a,i)=>{let y=30+i*75;x.fillStyle='#667085';x.fillText(a.label,10,y);x.fillStyle='#edf0f6';x.fillRect(10,y+12,w-24,17);x.fillStyle=a.c;x.fillRect(10,y+12,(w-24)*a.v/max,17);x.fillStyle='#344054';x.fillText(money(a.v),10,y+47);});
+}
+function renderMilestones(rows){
+ let tb=$('milestones').querySelector('tbody');tb.innerHTML='';
+ [5,10,15,20,30].forEach(y=>{let r=rows[y],tr=document.createElement('tr');if(!r)return;let vals=[y+' yrs',money(r.property),money(r.bal),money(r.buyNW),money(r.corpus),money(r.rentNW),r.buyNW>r.rentNW?'Buy':r.buyNW<r.rentNW?'Rent':'Tie'];vals.forEach(v=>{let td=document.createElement('td');td.textContent=v;tr.appendChild(td)});tb.appendChild(tr)});
+}
+function renderAnnual(rows,h){
+ let tb=$('annual').querySelector('tbody');tb.innerHTML='';
+ rows.slice(1,h+1).forEach(r=>{let tr=document.createElement('tr');[r.year,fmt(r.rent),fmt(r.emi),fmt(r.upkeep),fmt(r.interest),fmt(r.principal),money(r.property),money(r.bal),money(r.corpus),money(r.buyNW),money(r.rentNW)].forEach(v=>{let td=document.createElement('td');td.textContent=v;tr.appendChild(td)});tb.appendChild(tr)});
+}
+function renderInsights(rows,r,emi,upfront,be,invRate){
+ let monthlyRent=n('rent'),gap=emi+ (n('maintenance')+n('propertyTax'))/12-monthlyRent;
+ let realInv=(1+invRate)/(1+pct('inflation'))-1,lev= n('price')>0?n('loan')/n('price')*100:0;
+ let insights=[
+ ['Your true buying cheque',`Initial cash deployed is about ${money(upfront)}: down payment plus stamp/registration and other purchase costs. This is materially more than the ₹50 lakh down payment alone.`],
+ ['Monthly cash-flow gap',`Starting EMI is ${money(emi)} per month before maintenance and property tax. The renter invests the difference after including owner upkeep; this gap changes as rent inflates and the loan amortises.`],
+ ['Leverage cuts both ways',`The loan funds about ${lev.toFixed(1)}% of the property price. Appreciation applies to the full property value, but interest, transaction costs and slow resale can offset that leverage.`],
+ ['Inflation-adjusted return',`Your assumed investment return of ${(invRate*100).toFixed(2)}% translates to roughly ${(realInv*100).toFixed(2)}% real return after ${(pct('inflation')*100).toFixed(1)}% general inflation, before detailed tax and volatility effects.`],
+ ['Break-even is assumption-sensitive',be?`Under these inputs, buying first moves ahead in year ${be}. This is not a guaranteed crossover: changing appreciation, rent inflation, investment return or holding period can move it substantially.`:'Buying does not overtake renting within the 30-year model under these assumptions.'],
+ ['Costs often missed',`Budget for interiors, furnishing, repairs, society special assessments, property tax, insurance, brokerage, legal due diligence, moving costs and the time/cost to sell. A major repair or a slow resale can change the result.`],
+ ['Tax treatment is not automatic','Home-loan principal/interest deductions depend on the tax regime and eligibility. Equity-fund capital gains depend on fund type and current tax rules. The model uses a single effective tax rate only as a rough exit haircut.'],
+ ['Lifestyle and concentration risk','Buying concentrates wealth in one illiquid asset and ties you to a location. Renting can preserve flexibility and diversification; ownership may still be worth paying for stability, control and emotional value.']
+ ];
+ $('insights').innerHTML=insights.map(a=>`<div class="insight"><b>${a[0]}</b><p>${a[1]}</p></div>`).join('');
+}
+function csv(){
+ let head=['Year','Rent paid','EMI paid','Owner upkeep','Interest','Principal','Property value','Loan balance','Investment corpus','Buy net worth','Rent net worth'];
+ let lines=[head.join(',')];latest.slice(1).forEach(r=>lines.push([r.year,r.rent,r.emi,r.upkeep,r.interest,r.principal,r.property,r.bal,r.corpus,r.buyNW,r.rentNW].join(',')));
+ let blob=new Blob([lines.join('\n')],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='buy-vs-rent-projection.csv';a.click();URL.revokeObjectURL(url);
+}
+ids.forEach(id=>$(id).addEventListener('input',()=>{if(id==='strategy')return;calc()}));
+$('strategy').addEventListener('change',()=>{if($('strategy').value!=='custom')$('return').value=({conservative:6.5,balanced:9,equity:11.5})[$('strategy').value];calc()});
+$('reset').addEventListener('click',()=>{ids.forEach(id=>$(id).value=defaults[id]);calc()});
+$('download').addEventListener('click',csv);
+$('showAll').addEventListener('click',()=>{$('horizon').value=30;calc()});
+window.addEventListener('resize',()=>calc());
+calc();
+</script>
+</body>
+</html>

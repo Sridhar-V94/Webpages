@@ -1,0 +1,610 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f7f4">
+  <title>Brickwise — Buy vs Rent Simulator</title>
+  <style>
+    :root {
+      --ink: #19251f;
+      --muted: #748078;
+      --line: #e6ebe7;
+      --paper: #ffffff;
+      --wash: #f5f7f4;
+      --green: #237b58;
+      --green-dark: #15583d;
+      --green-soft: #e8f4ec;
+      --blue: #4779c7;
+      --orange: #e3a456;
+      --red: #bd5b49;
+      --shadow: 0 14px 40px rgba(27, 44, 35, .055);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: var(--wash);
+      font-synthesis: none;
+      text-rendering: optimizeLegibility;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-width: 320px; background: var(--wash); }
+    button, input, select { font: inherit; }
+    .topbar { height: 66px; padding: 0 max(24px, calc((100% - 1220px)/2)); background: #fff; border-bottom: 1px solid var(--line); display:flex; align-items:center; justify-content:space-between; }
+    .brand { display:flex; align-items:center; gap:10px; font-size:16px; font-weight:750; letter-spacing:-.4px; }
+    .brand-mark { width:29px;height:29px;border-radius:9px;background:var(--green);display:grid;place-items:center;color:#fff;font-size:16px; }
+    .top-note { color:var(--muted);font-size:12px; }
+    main { max-width:1220px;margin:0 auto;padding:38px 24px 64px; }
+    .intro { display:flex;justify-content:space-between;align-items:flex-end;gap:24px;margin-bottom:27px; }
+    .eyebrow { color:var(--green);font-weight:750;font-size:11px;letter-spacing:1.55px;text-transform:uppercase;margin-bottom:9px; }
+    h1 { font-size:clamp(29px,4vw,42px);line-height:1.12;letter-spacing:-1.7px;margin:0 0 10px;font-weight:720; }
+    .subtitle { color:var(--muted);font-size:14px;line-height:1.6;margin:0;max-width:680px; }
+    .live-pill { white-space:nowrap;display:inline-flex;align-items:center;gap:8px;padding:9px 13px;border:1px solid #dfe9e1;background:#fff;border-radius:24px;color:#58675d;font-size:11px;font-weight:650; }
+    .live-pill:before { content:"";width:7px;height:7px;background:#46a66e;border-radius:50%;box-shadow:0 0 0 3px #e7f4eb; }
+    .layout { display:grid;grid-template-columns:340px minmax(0,1fr);gap:20px;align-items:start; }
+    .card { background:var(--paper);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow); }
+    .assumptions { padding:21px 20px 20px; }
+    .card-heading { display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:15px; }
+    h2 { font-size:15px;letter-spacing:-.25px;margin:0;font-weight:730; }
+    .reset { border:0;background:transparent;color:var(--green);font-size:11px;font-weight:700;cursor:pointer;padding:5px; }
+    .section-label { margin:21px 0 10px;padding-top:16px;border-top:1px solid #eef1ee;color:#87918a;font-size:10px;letter-spacing:1.2px;font-weight:750;text-transform:uppercase; }
+    .section-label:first-of-type { margin-top:0;padding-top:0;border-top:0; }
+    .field { margin-bottom:13px; }
+    .field-top { display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px; }
+    label { color:#435047;font-size:11px;font-weight:600; }
+    .value-wrap { display:flex;align-items:center;gap:4px; }
+    .value-wrap input[type=number] { width:100px;border:0;background:transparent;text-align:right;font-size:12px;font-weight:720;color:var(--ink);outline:0;padding:2px 0; }
+    .unit { font-size:10px;color:#7a857d;min-width:19px; }
+    input[type=range] { width:100%;height:4px;margin:0;appearance:none;background:linear-gradient(to right,var(--green) 0%,var(--green) var(--fill,50%),#e9ede9 var(--fill,50%),#e9ede9 100%);border-radius:4px;cursor:pointer; }
+    input[type=range]::-webkit-slider-thumb { appearance:none;width:14px;height:14px;background:#fff;border:2px solid var(--green);border-radius:50%;box-shadow:0 1px 4px #0002; }
+    input[type=range]::-moz-range-thumb { width:11px;height:11px;background:#fff;border:2px solid var(--green);border-radius:50%;box-shadow:0 1px 4px #0002; }
+    .field-hint { color:#929b94;font-size:10px;line-height:1.5;margin:5px 0 0; }
+    .select-row { display:flex;align-items:center;justify-content:space-between;gap:10px;margin:9px 0 11px; }
+    select { border:1px solid #e3e9e4;border-radius:7px;background:#fff;padding:7px 9px;color:#36453b;font-size:11px;outline-color:var(--green); }
+    .asset-block { padding:9px 10px;border:1px solid #edf1ed;border-radius:9px;background:#fbfcfb;margin-bottom:8px; }
+    .asset-top { display:flex;justify-content:space-between;align-items:center;font-size:10px;font-weight:650;color:#435047;margin-bottom:6px; }
+    .asset-top span:last-child { color:var(--green);font-variant-numeric:tabular-nums;font-weight:750; }
+    .asset-return { display:flex;align-items:center;gap:6px;margin-top:7px;color:#8b958d;font-size:9px; }
+    .asset-return input { width:54px;border:1px solid #e3e9e4;border-radius:6px;padding:3px 5px;font-size:10px;text-align:right;color:#36453b;outline-color:var(--green); }
+    .blend-readout { display:flex;justify-content:space-between;align-items:center;font-size:10px;color:#6d7b72;margin:2px 0 12px; }
+    .blend-readout strong { color:var(--green);font-size:12px; }
+    .results { min-width:0; }
+    .recommendation { padding:18px 20px;display:flex;justify-content:space-between;align-items:center;gap:18px;background:linear-gradient(112deg,#eef7f0,#fff 72%);border-color:#dfece1;margin-bottom:12px; }
+    .rec-copy { display:flex;align-items:flex-start;gap:13px; }
+    .rec-icon { width:37px;height:37px;flex:0 0 37px;border-radius:12px;background:#dcefe1;color:var(--green);display:grid;place-items:center;font-size:19px;font-weight:700; }
+    .rec-label { color:#718078;font-size:10px;text-transform:uppercase;letter-spacing:.9px;font-weight:750;margin:1px 0 4px; }
+    .rec-title { font-size:16px;font-weight:750;letter-spacing:-.3px; }
+    .rec-sub { color:#6d7b72;font-size:11px;line-height:1.5;margin-top:4px;max-width:460px; }
+    .rec-delta { text-align:right;white-space:nowrap; }
+    .rec-delta strong { display:block;font-size:21px;letter-spacing:-.7px; }
+    .rec-delta span { font-size:10px;color:#76827a; }
+    .breakeven { padding:13px 18px;display:flex;align-items:center;gap:13px;margin-bottom:14px;border-color:#e2eae3;background:#fbfdfb; }
+    .breakeven.buy-lead { background:linear-gradient(110deg,#eaf6ee,#fff 75%);border-color:#d9ebdd; }
+    .breakeven.rent-lead { background:linear-gradient(110deg,#edf3fc,#fff 75%);border-color:#dbe6f5; }
+    .be-icon { width:32px;height:32px;flex:0 0 32px;border-radius:10px;background:#eef2ee;display:grid;place-items:center;font-size:17px;color:#5b6d60; }
+    .breakeven.buy-lead .be-icon { background:#dcefe1;color:var(--green); }
+    .breakeven.rent-lead .be-icon { background:#e3ecfa;color:var(--blue); }
+    .be-copy { flex:1;min-width:0; }
+    .be-title { font-size:13px;font-weight:740; }
+    .be-sub { color:#738078;font-size:10px;line-height:1.5;margin-top:3px; }
+    .be-year { white-space:nowrap;font-size:12px;font-weight:750;color:#47564c;background:#fff;border:1px solid #e6ebe7;border-radius:8px;padding:7px 10px; }
+    .metrics { display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px;margin-bottom:14px; }
+    .metric { padding:15px 15px 13px;min-height:103px; }
+    .metric-label { display:flex;align-items:center;gap:6px;color:#78837b;font-size:10px;font-weight:650; }
+    .metric-value { font-size:20px;letter-spacing:-.75px;font-weight:760;margin-top:12px; }
+    .metric-detail { color:#89928b;font-size:10px;margin-top:5px;line-height:1.5; }
+    .dot { width:7px;height:7px;border-radius:3px;background:var(--green);display:inline-block; }
+    .dot.blue { background:var(--blue); }
+    .milestones { padding:17px 19px;margin-bottom:14px; }
+    .milestone-grid { display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-top:12px; }
+    .milestone { border:1px solid #edf1ed;background:#fbfcfb;border-radius:10px;padding:11px 12px;min-width:0; }
+    .milestone-year { font-size:10px;color:#7e8981;font-weight:750;text-transform:uppercase;letter-spacing:.6px; }
+    .milestone-row { display:flex;justify-content:space-between;gap:6px;font-size:10px;margin-top:8px;color:#6d7970; }
+    .milestone-row strong { color:var(--green-dark);font-variant-numeric:tabular-nums; }
+    .milestone-row.rent strong { color:#3768ac; }
+    .milestone-winner { margin-top:9px;padding-top:8px;border-top:1px solid #eef1ee;font-size:9px;font-weight:750; }
+    .chart-card, .gap-card { padding:18px 18px 13px;margin-bottom:14px; }
+    .chart-head { display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:9px; }
+    .chart-title { font-size:13px;font-weight:740; }
+    .chart-subtitle { color:#89928b;font-size:10px;margin-top:4px; }
+    .chart-legend { display:flex;gap:14px;flex-wrap:wrap;justify-content:flex-end;color:#66736a;font-size:10px; }
+    .legend-item { display:flex;align-items:center;gap:6px; }
+    .legend-line { width:16px;height:3px;border-radius:2px;background:var(--green); }
+    .legend-line.blue { background:var(--blue); }
+    .chart-wrap { width:100%;height:254px;position:relative; }
+    .gap-card .chart-wrap { height:158px; }
+    #chart, #gapChart { width:100%;height:100%;overflow:visible; }
+    .chart-tooltip { position:absolute;display:none;pointer-events:none;background:#17231c;color:#fff;padding:9px 11px;border-radius:8px;font-size:10px;line-height:1.65;box-shadow:0 5px 20px #0002;z-index:2;white-space:nowrap; }
+    .horizons { display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:13px; }
+    .horizon-label { color:#7e8981;font-size:10px; }
+    .horizon-buttons { display:flex;gap:5px; }
+    .horizon-btn { border:1px solid #e5eae6;background:#fff;border-radius:7px;color:#68756c;font-size:10px;padding:6px 10px;cursor:pointer;transition:.15s; }
+    .horizon-btn:hover { border-color:#a9cbb3; }
+    .horizon-btn.active { color:var(--green-dark);background:var(--green-soft);border-color:#d5e9d9;font-weight:750; }
+    .table-card { padding:18px 19px 4px;margin-bottom:14px; }
+    .table-head { display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:13px; }
+    .table-head p { color:#89928b;font-size:10px;line-height:1.5;margin:4px 0 0; }
+    .scroll-table { overflow-x:auto; }
+    table { border-collapse:collapse;width:100%;min-width:840px;text-align:right; }
+    th { color:#818c84;text-transform:uppercase;letter-spacing:.55px;font-size:9px;font-weight:700;padding:9px 8px;border-bottom:1px solid var(--line);white-space:nowrap; }
+    th:first-child,td:first-child { text-align:left;padding-left:4px; }
+    td { padding:10px 8px;border-bottom:1px solid #eff2ef;color:#536057;font-size:10px;font-variant-numeric:tabular-nums;white-space:nowrap; }
+    tbody tr:last-child td { border-bottom:0; }
+    td.buy { color:var(--green-dark);font-weight:720; }
+    td.rent { color:#3768ac;font-weight:720; }
+    tr.selected td { background:#f4f8f4; }
+    tr.selected td:first-child { border-radius:6px 0 0 6px; }
+    tr.selected td:last-child { border-radius:0 6px 6px 0; }
+    .insights { padding:17px 19px; }
+    .insight-list { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px; }
+    .insight { padding:12px 13px;background:#f8faf8;border:1px solid #edf1ed;border-radius:10px; }
+    .insight strong { display:block;font-size:11px;margin-bottom:5px; }
+    .insight p { color:#6d7970;font-size:10px;line-height:1.6;margin:0; }
+    .method { margin-top:14px;padding:16px 18px; }
+    .method summary { cursor:pointer;list-style:none;font-size:12px;font-weight:730;display:flex;justify-content:space-between; }
+    .method summary::-webkit-details-marker { display:none; }
+    .method summary:after { content:"＋";color:var(--green);font-size:16px;line-height:12px; }
+    .method[open] summary:after { content:"−"; }
+    .method-content { color:#66736a;font-size:11px;line-height:1.75;padding-top:12px; }
+    .method-content ul { padding-left:17px;margin:7px 0; }
+    .disclaimer { color:#8a948d;font-size:10px;line-height:1.65;margin:15px 2px 0; }
+    footer { border-top:1px solid var(--line);color:#909a92;text-align:center;padding:17px 20px;font-size:10px; }
+    @media (max-width:950px) { .layout { grid-template-columns:290px minmax(0,1fr);gap:14px; } .assumptions { padding:17px 15px; } .metrics { grid-template-columns:repeat(2,minmax(0,1fr)); } .metric { min-height:91px; } }
+    @media (max-width:700px) { main { padding:25px 14px 40px; } .topbar { padding:0 15px;height:58px; } .top-note { display:none; } .intro { align-items:flex-start;flex-direction:column;gap:13px;margin-bottom:19px; } .layout { grid-template-columns:1fr; } .assumptions { order:2; } .results { order:1; } .metrics { gap:8px; } .metric { padding:12px; } .metric-value { font-size:18px; } .recommendation, .breakeven { align-items:flex-start;padding:15px; } .rec-delta strong { font-size:17px; } .rec-title { font-size:14px; } .be-year { font-size:11px; } .milestone-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .chart-card { padding:15px 12px 12px; } .chart-wrap { height:220px; } .gap-card .chart-wrap { height:150px; } .chart-head { flex-direction:column; } .chart-legend { justify-content:flex-start; } .horizons { align-items:flex-start;flex-direction:column; } .horizon-buttons { width:100%;justify-content:space-between; } .horizon-btn { padding:6px 8px; } .insight-list { grid-template-columns:1fr; } }
+    @media (prefers-reduced-motion:reduce) { *,*:before,*:after { scroll-behavior:auto!important;transition:none!important; } }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark">₹</span> brickwise</div>
+    <div class="top-note">A clearer way to think about your next home</div>
+  </header>
+  <main>
+    <section class="intro">
+      <div>
+        <div class="eyebrow">The home decision, in perspective</div>
+        <h1>Buy a home or rent &amp; invest?</h1>
+        <p class="subtitle">Compare the long-term wealth impact of buying a ₹2 crore home versus renting a similar one and investing the money you save.</p>
+      </div>
+      <div class="live-pill">Live scenario · India</div>
+    </section>
+
+    <div class="layout">
+      <aside class="card assumptions" aria-label="Scenario assumptions">
+        <div class="card-heading"><h2>Your assumptions</h2><button class="reset" id="resetBtn" type="button">Reset defaults</button></div>
+        <div class="section-label">Home &amp; loan</div>
+        <div id="homeFields"></div>
+        <div class="section-label">Rent &amp; ownership costs</div>
+        <div id="costFields"></div>
+        <div class="section-label">Investing &amp; tax</div>
+        <div class="select-row"><label for="strategy">Renter investment mix</label><select id="strategy">
+          <option value="custom">Custom mix</option><option value="equity">Equity-heavy</option><option value="balanced" selected>Balanced</option><option value="ppf">PPF / conservative</option>
+        </select></div>
+        <div class="asset-block">
+          <div class="asset-top"><span>Equity / mutual funds</span><span id="eqAllocOut">40%</span></div>
+          <input type="range" id="eqAlloc" min="0" max="100" step="5" value="40" aria-label="Equity allocation">
+          <div class="asset-return"><label for="eqReturn">Expected return</label><input type="number" id="eqReturn" min="0" max="20" step="0.1" value="12"><span>% p.a.</span></div>
+        </div>
+        <div class="asset-block">
+          <div class="asset-top"><span>Debt / hybrid funds</span><span id="debtAllocOut">35%</span></div>
+          <input type="range" id="debtAlloc" min="0" max="100" step="5" value="35" aria-label="Debt allocation">
+          <div class="asset-return"><label for="debtReturn">Expected return</label><input type="number" id="debtReturn" min="0" max="20" step="0.1" value="8"><span>% p.a.</span></div>
+        </div>
+        <div class="asset-block">
+          <div class="asset-top"><span>PPF / deposits</span><span id="ppfAllocOut">25%</span></div>
+          <input type="range" id="ppfAlloc" min="0" max="100" step="5" value="25" aria-label="PPF allocation">
+          <div class="asset-return"><label for="ppfReturn">Expected return</label><input type="number" id="ppfReturn" min="0" max="20" step="0.1" value="7.1"><span>% p.a.</span></div>
+        </div>
+        <div class="blend-readout"><span>Blended expected return</span><strong id="blendReturn">—</strong></div>
+        <div id="investFields"></div>
+        <p class="field-hint">Allocations always add up to 100%. Returns are expected nominal annual returns, not guaranteed. Past performance does not predict future results.</p>
+      </aside>
+
+      <section class="results" aria-label="Comparison results">
+        <div class="card recommendation">
+          <div class="rec-copy">
+            <div class="rec-icon" id="recIcon">↗</div>
+            <div><div class="rec-label">At your selected horizon</div><div class="rec-title" id="recTitle">Calculating comparison…</div><div class="rec-sub" id="recSub"></div></div>
+          </div>
+          <div class="rec-delta"><strong id="recDelta">—</strong><span>estimated net-worth difference</span></div>
+        </div>
+        <div class="card breakeven" id="breakEven">
+          <div class="be-icon" id="beIcon">↔</div>
+          <div class="be-copy"><div class="rec-label">Break-even watch · 30-year view</div><div class="be-title" id="beTitle">—</div><div class="be-sub" id="beSub"></div></div>
+          <div class="be-year" id="beYear">—</div>
+        </div>
+        <div class="metrics">
+          <div class="card metric"><div class="metric-label"><span class="dot"></span> BUY · NET WORTH</div><div class="metric-value" id="buyNet">—</div><div class="metric-detail" id="buyDetail">Property equity after selling costs</div></div>
+          <div class="card metric"><div class="metric-label"><span class="dot blue"></span> RENT · INVESTMENTS</div><div class="metric-value" id="rentNet">—</div><div class="metric-detail" id="rentDetail">Investment portfolio value</div></div>
+          <div class="card metric"><div class="metric-label">PROPERTY VALUE</div><div class="metric-value" id="propertyValue">—</div><div class="metric-detail" id="loanDetail">Outstanding loan —</div></div>
+          <div class="card metric"><div class="metric-label">INVESTMENT CORPUS</div><div class="metric-value" id="corpusValue">—</div><div class="metric-detail">Including initial lump sum</div></div>
+        </div>
+        <div class="card milestones"><h2>Milestone checkpoints · all horizons</h2><div class="milestone-grid" id="milestoneGrid"></div></div>
+        <div class="card chart-card">
+          <div class="chart-head"><div><div class="chart-title">Your projected net worth over time</div><div class="chart-subtitle">Estimated exit value, after outstanding loan and selling costs</div></div>
+            <div class="chart-legend"><span class="legend-item"><i class="legend-line"></i> Buy · home equity</span><span class="legend-item"><i class="legend-line blue"></i> Rent · investments</span></div>
+          </div>
+          <div class="chart-wrap"><svg id="chart" role="img" aria-label="Line chart comparing projected net worth for buying and renting"></svg><div class="chart-tooltip" id="chartTooltip"></div></div>
+          <div class="horizons"><span class="horizon-label">Compare at</span><div class="horizon-buttons" role="group" aria-label="Comparison horizon">
+            <button type="button" class="horizon-btn" data-years="5">5 years</button><button type="button" class="horizon-btn" data-years="10">10 years</button><button type="button" class="horizon-btn" data-years="15">15 years</button><button type="button" class="horizon-btn active" data-years="20">20 years</button><button type="button" class="horizon-btn" data-years="30">30 years</button>
+          </div></div>
+        </div>
+        <div class="card gap-card">
+          <div class="chart-head"><div><div class="chart-title">Net-worth gap: buy minus rent</div><div class="chart-subtitle">Above the line, buying wins. Below it, renting wins. The dot marks the first crossover.</div></div></div>
+          <div class="chart-wrap"><svg id="gapChart" role="img" aria-label="Chart of the net-worth difference between buying and renting over 30 years"></svg><div class="chart-tooltip" id="gapTooltip"></div></div>
+        </div>
+        <div class="card table-card">
+          <div class="table-head"><div><h2>Year-by-year projection</h2><p>Nominal future rupees. *Owner outlay includes the down payment, purchase duties, EMIs, maintenance and property tax; rent paid excludes any tax benefit. Interest and principal are for that year.</p></div></div>
+          <div class="scroll-table"><table><thead><tr><th>Year</th><th>Home value</th><th>Loan balance</th><th>Interest paid</th><th>Principal repaid</th><th>Buy net worth</th><th>Owner outlay*</th><th>Rent paid*</th><th>Rent portfolio</th><th>Rent net worth</th></tr></thead><tbody id="projectionBody"></tbody></table></div>
+        </div>
+        <div class="card insights"><h2>What to keep in mind</h2><div class="insight-list" id="insightList"></div></div>
+        <details class="card method">
+          <summary>How this comparison works &amp; what it leaves out</summary>
+          <div class="method-content">
+            Both scenarios start with the same available cash: the renter invests the down payment <em>and</em> the buyer's upfront stamp duty and registration costs. Each month the renter also invests the difference between the buyer's EMI, maintenance and property tax (less any buyer tax benefit entered) and the rent paid (less any renter tax benefit). If rent costs more, the model draws that difference from the portfolio, but never below zero. This keeps the cash-flow comparison like-for-like.
+            <ul>
+              <li>EMI uses a standard monthly reducing-balance loan; the rate is held constant and tenure cannot exceed the selected term. Each year's interest and principal are shown in the table.</li>
+              <li>Rent, maintenance and property tax grow at their entered inflation rates. Property value grows at the assumed annual appreciation rate.</li>
+              <li>The renter's blended return is the allocation-weighted average of the three entered asset returns. It is compounded monthly and rebalanced implicitly; actual portfolios vary and carry market risk.</li>
+              <li>Portfolio returns compound monthly. Buy net worth is estimated resale value less outstanding loan and the assumed selling-cost percentage. It is not a guaranteed sale price.</li>
+              <li>All results are nominal future rupees. The dashboard also estimates today's purchasing power by dividing net worth by (1 + general inflation)^years. Actual household inflation may differ.</li>
+              <li>Entered annual tax benefits are held flat in nominal rupees; they are estimates, not tax calculations.</li>
+              <li>Not modeled: slab-specific income-tax treatment or HRA eligibility beyond your manual estimates, capital-gains tax on either portfolio or the home sale, step-up/variable loan rates, vacancy, major repairs, brokerage on rent, furnishing, opportunity cost of time, and emotional or lifestyle value. State-level stamp duty varies.</li>
+            </ul>
+            Use a conservative range for returns and appreciation, and check tax and transaction rules with a qualified Indian professional before deciding.
+          </div>
+        </details>
+        <p class="disclaimer">Illustrative planning tool, not investment, tax, loan, or legal advice. Mutual funds and equity investments are subject to market risk. Actual costs, returns, taxes and property values can differ substantially.</p>
+      </section>
+    </div>
+  </main>
+  <footer>Made for better-informed home decisions · All amounts in Indian rupees (₹)</footer>
+
+  <script>
+    (() => {
+      "use strict";
+      const defaults = {
+        price: 20000000, down: 5000000, rate: 8, tenure: 20,
+        rent: 50000, rentInflation: 5, generalInflation: 5, appreciation: 8,
+        maintenance: 0.75, maintenanceInflation: 5, propertyTax: 20000,
+        stamp: 7, registration: 1, saleCost: 2,
+        eqAlloc: 40, debtAlloc: 35, ppfAlloc: 25,
+        eqReturn: 12, debtReturn: 8, ppfReturn: 7.1,
+        buyerTaxBenefit: 0, renterTaxBenefit: 0
+      };
+      const presets = {
+        custom: null,
+        equity: { eqAlloc: 75, debtAlloc: 15, ppfAlloc: 10, eqReturn: 12, debtReturn: 8, ppfReturn: 7.1 },
+        balanced: { eqAlloc: 40, debtAlloc: 35, ppfAlloc: 25, eqReturn: 12, debtReturn: 8, ppfReturn: 7.1 },
+        ppf: { eqAlloc: 0, debtAlloc: 20, ppfAlloc: 80, eqReturn: 12, debtReturn: 8, ppfReturn: 7.1 }
+      };
+      const allocKeys = ["eqAlloc", "debtAlloc", "ppfAlloc"];
+      const returnKeys = ["eqReturn", "debtReturn", "ppfReturn"];
+      const config = [
+        { id:"price",label:"Property purchase price",min:5000000,max:100000000,step:500000,unit:"₹",type:"money" },
+        { id:"down",label:"Down payment",min:500000,max:50000000,step:100000,unit:"₹",type:"money" },
+        { id:"rate",label:"Home loan interest rate",min:5,max:14,step:.1,unit:"%",digits:1 },
+        { id:"tenure",label:"Loan tenure",min:5,max:30,step:1,unit:"yrs",digits:0 },
+        { id:"rent",label:"Starting monthly rent",min:10000,max:300000,step:1000,unit:"₹",type:"money" },
+        { id:"rentInflation",label:"Annual rent increase",min:0,max:12,step:.5,unit:"%",digits:1 },
+        { id:"generalInflation",label:"General inflation (CPI)",min:0,max:12,step:.5,unit:"%",digits:1,hint:"Used to show results in today's purchasing power." },
+        { id:"appreciation",label:"Property appreciation",min:0,max:12,step:.5,unit:"%",digits:1 },
+        { id:"maintenance",label:"Annual maintenance",min:0,max:3,step:.05,unit:"%",digits:2,hint:"As a percentage of today's property price." },
+        { id:"maintenanceInflation",label:"Maintenance cost inflation",min:0,max:12,step:.5,unit:"%",digits:1 },
+        { id:"propertyTax",label:"Annual property tax (today)",min:0,max:300000,step:1000,unit:"₹",type:"money" },
+        { id:"stamp",label:"Stamp duty",min:0,max:12,step:.5,unit:"%",digits:1,hint:"State-specific; applied to purchase price." },
+        { id:"registration",label:"Registration & other buying costs",min:0,max:3,step:.1,unit:"%",digits:1 },
+        { id:"saleCost",label:"Selling costs at exit",min:0,max:6,step:.25,unit:"%",digits:2,hint:"Brokerage, legal fees and other disposal costs." },
+        { id:"buyerTaxBenefit",label:"Buyer annual tax benefit (today)",min:0,max:300000,step:5000,unit:"₹",type:"money",hint:"Optional estimate of applicable loan tax savings." },
+        { id:"renterTaxBenefit",label:"Renter annual tax benefit (today)",min:0,max:300000,step:5000,unit:"₹",type:"money",hint:"Optional estimate of HRA / rent tax savings." }
+      ];
+      const state = {...defaults};
+      let horizon = 20;
+      let projection = [];
+      const homeIds = ["price","down","rate","tenure"];
+      const costIds = ["rent","rentInflation","generalInflation","appreciation","maintenance","maintenanceInflation","propertyTax","stamp","registration","saleCost"];
+      const investIds = ["buyerTaxBenefit","renterTaxBenefit"];
+      const numberFmt = new Intl.NumberFormat("en-IN", {maximumFractionDigits:0});
+      const format = (n) => (n < 0 ? "−" : "") + "₹" + numberFmt.format(Math.abs(Math.round(Number.isFinite(n) ? n : 0)));
+      const compact = (n) => {
+        const abs = Math.abs(n);
+        const prefix=n<0?"−":"";
+        if (abs >= 10000000) return prefix+"₹" + (abs/10000000).toFixed(abs >= 100000000 ? 1 : 2).replace(/\.?0+$/,"") + " Cr";
+        if (abs >= 100000) return prefix+"₹" + (abs/100000).toFixed(abs >= 1000000 ? 1 : 2).replace(/\.?0+$/,"") + " L";
+        if (abs >= 1000) return prefix+"₹" + (abs/1000).toFixed(0) + "k";
+        return format(n);
+      };
+      function blendedReturn() {
+        return (state.eqAlloc*state.eqReturn + state.debtAlloc*state.debtReturn + state.ppfAlloc*state.ppfReturn)/100;
+      }
+      function syncAllocationUI() {
+        allocKeys.forEach(k => {
+          const slider = document.getElementById(k);
+          const out = document.getElementById(k+"Out");
+          if (slider) { slider.value = state[k]; slider.style.setProperty("--fill", state[k]+"%"); }
+          if (out) out.textContent = state[k]+"%";
+        });
+        returnKeys.forEach(k => {
+          const input = document.getElementById(k);
+          if (input) input.value = state[k];
+        });
+        document.getElementById("blendReturn").textContent = blendedReturn().toFixed(1)+"% p.a.";
+      }
+      function setAllocation(changed, value) {
+        value = Math.max(0, Math.min(100, Math.round(Number(value)||0)));
+        state[changed] = value;
+        const others = allocKeys.filter(k => k !== changed);
+        const remaining = 100-value;
+        const otherSum = others.reduce((sum,k) => sum+state[k], 0);
+        if (otherSum <= 0) {
+          state[others[0]] = Math.round(remaining/2);
+          state[others[1]] = remaining-state[others[0]];
+        } else {
+          const first = Math.round(remaining*state[others[0]]/otherSum);
+          state[others[0]] = first;
+          state[others[1]] = remaining-first;
+        }
+        document.getElementById("strategy").value = "custom";
+        syncAllocationUI();
+        calculate();
+      }
+      function moneyToInput(value) { return String(Math.round(value)); }
+      function renderFields(ids, targetId) {
+        document.getElementById(targetId).innerHTML = ids.map(id => {
+          const f = config.find(x => x.id === id);
+          const value = state[id];
+          const shown = f.type === "money" ? moneyToInput(value) : Number(value).toFixed(f.digits || 0);
+          const display = f.type === "money" ? compact(value) : shown;
+          const pct = ((value-f.min)/(f.max-f.min))*100;
+          return `<div class="field"><div class="field-top"><label for="${id}">${f.label}</label><span class="value-wrap"><input id="${id}Value" aria-label="${f.label} value" type="number" min="${f.min}" max="${f.max}" step="${f.step}" value="${shown}"><span class="unit">${f.type === "money" ? "" : f.unit}</span></span></div><input id="${id}" type="range" min="${f.min}" max="${f.max}" step="${f.step}" value="${value}" style="--fill:${pct}%"><div class="field-hint" id="${id}Hint">${f.hint || (f.type === "money" ? display : "")}</div></div>`;
+        }).join("");
+        ids.forEach(id => {
+          const range = document.getElementById(id);
+          const numeric = document.getElementById(id+"Value");
+          range.addEventListener("input", () => { state[id] = Number(range.value); numeric.value = state[id]; if(id==="price")syncDownCap(); updateField(id); calculate(); });
+          numeric.addEventListener("change", () => {
+            const f = config.find(x => x.id === id);
+            const effectiveMax=id==="down"?Math.min(f.max,Number(range.max)):f.max;
+            const val = Math.min(effectiveMax, Math.max(f.min, Number(numeric.value) || f.min));
+            state[id] = val; range.value = val; numeric.value = f.type === "money" ? Math.round(val) : val;
+            if(id==="price")syncDownCap();
+            updateField(id); calculate();
+          });
+        });
+      }
+      function syncDownCap() {
+        const range=document.getElementById("down"),numeric=document.getElementById("downValue");
+        if(!range)return;
+        range.max=state.price;numeric.max=state.price;
+        if(state.down>state.price){state.down=state.price;range.value=state.down;numeric.value=Math.round(state.down);}
+        updateField("down");
+      }
+      function updateField(id) {
+        const f = config.find(x => x.id === id), v = state[id], range = document.getElementById(id);
+        const max=Number(range.max)||f.max;
+        range.style.setProperty("--fill", `${((v-f.min)/(max-f.min))*100}%`);
+        const hint = document.getElementById(id+"Hint");
+        if (f.type === "money" && !f.hint) hint.textContent = compact(v);
+      }
+      function emiFor(principal, annualRate, years) {
+        if (principal <= 0 || years <= 0) return 0;
+        const r = annualRate/1200, n = years*12;
+        return r === 0 ? principal/n : principal*r*Math.pow(1+r,n)/(Math.pow(1+r,n)-1);
+      }
+      function simulate() {
+        const principal = Math.max(0,state.price-state.down);
+        const monthlyRate = state.rate/1200;
+        const emi = emiFor(principal,state.rate,state.tenure);
+        const months = 30*12;
+        let balance = principal, corpus = state.down + state.price*(state.stamp+state.registration)/100;
+        let property = state.price, rent = state.rent, upkeep = state.price*state.maintenance/100, propertyTax = state.propertyTax;
+        const annualInvestmentRate = Math.pow(1+blendedReturn()/100,1/12)-1;
+        let annualInterest=0, annualPrincipal=0, annualRent=0, annualOwnerCosts=0, annualInvested=0;
+        let totalRentPaid=0,totalOwnerCosts=state.down+state.price*(state.stamp+state.registration)/100;
+        const rows = [{year:0,property:state.price,balance,corpus,buyNet:state.price*(1-state.saleCost/100)-balance,rentNet:corpus,totalRentPaid,totalOwnerCosts,annualRent:0,annualOwnerCosts:0,annualInterest:0,annualPrincipal:0,annualInvested:0}];
+        for(let month=1;month<=months;month++) {
+          const interest = balance > 0 ? balance*monthlyRate : 0;
+          const principalPaid = balance > 0 ? Math.min(balance,Math.max(0,emi-interest)) : 0;
+          balance = Math.max(0,balance-principalPaid);
+          const monthlyRent = rent;
+          const monthlyUpkeep = upkeep/12;
+          const monthlyTax = propertyTax/12;
+          const buyerBenefit = state.buyerTaxBenefit/12;
+          const renterBenefit = state.renterTaxBenefit/12;
+          const emiPaid = balance > 0 || principalPaid > 0 ? emi : 0;
+          const buyerCost = emiPaid+monthlyUpkeep+monthlyTax-buyerBenefit;
+          const renterCost = monthlyRent-renterBenefit;
+          const contribution = buyerCost-renterCost;
+          corpus = Math.max(0,corpus+contribution);
+          corpus *= 1+annualInvestmentRate;
+          totalOwnerCosts += emiPaid+monthlyUpkeep+monthlyTax;
+          totalRentPaid += monthlyRent;
+          annualInterest += interest; annualPrincipal += principalPaid;
+          annualRent += monthlyRent; annualOwnerCosts += monthlyUpkeep+monthlyTax;
+          annualInvested += Math.max(0,contribution);
+          if(month%12===0) {
+            const year=month/12;
+            property *= 1+state.appreciation/100;
+            rent *= 1+state.rentInflation/100;
+            upkeep *= 1+state.maintenanceInflation/100;
+            propertyTax *= 1+state.maintenanceInflation/100;
+            rows.push({year,property,balance,corpus,buyNet:property*(1-state.saleCost/100)-balance,rentNet:corpus,totalRentPaid,totalOwnerCosts,annualRent,annualOwnerCosts,annualInterest,annualPrincipal,annualInvested});
+            annualInterest=0;annualPrincipal=0;annualRent=0;annualOwnerCosts=0;annualInvested=0;
+          }
+        }
+        return {rows,emi,principal,initialCosts:state.price*(state.stamp+state.registration)/100,monthlyOwner:emi+state.price*state.maintenance/1200+state.propertyTax/12};
+      }
+      function crossover(rows) {
+        for (let i=1;i<rows.length;i++) {
+          if (rows[i].buyNet>=rows[i].rentNet && rows[i-1].buyNet<rows[i].rentNet) return rows[i].year;
+        }
+        return null;
+      }
+      function addInsights(data, row) {
+        const rentAtYear = state.rent*Math.pow(1+state.rentInflation/100,Math.max(0,horizon-1));
+        const debtFree = state.tenure <= horizon;
+        const initialRatio = state.rent*12/state.price*100;
+        const investmentContribution = row.rentNet-(state.down+data.initialCosts);
+        const cross = crossover(data.rows);
+        const insights = [
+          ["The rent-to-price lens",`Today's annual rent is ${initialRatio.toFixed(2)}% of the purchase price. This is a quick screening metric, not a decision rule; rent growth and investment returns matter over time.`],
+          ["The renter must invest consistently",`The renter starts by investing ${format(state.down+data.initialCosts)} (down payment plus estimated purchase duties). The portfolio also relies on investing monthly cash-flow savings rather than spending them.`],
+          ["Rent grows, EMI does not",`By year ${horizon}, monthly rent is about ${format(rentAtYear)} versus a fixed EMI of ${format(data.emi)}. If rent appreciates faster than your income or the EMI, renting can become the costlier option later on.`],
+          ["Loan tenure changes the trade-off",debtFree?`The home loan is scheduled to be repaid by year ${state.tenure}; after that, EMI stops, though maintenance and property tax continue.`:`At year ${horizon}, approximately ${format(row.balance)} of the home loan remains. Longer tenure lowers EMI but increases total interest and delays full ownership.`],
+          ["Liquidity and flexibility",`A home is illiquid and concentrated in one asset: selling costs are assumed at ${state.saleCost}%, and the resale price is uncertain. The renter's ${format(row.corpus)} portfolio is liquid and diversified, but it depends on staying invested through market cycles.`],
+          ["What the model cannot price",`Society charges, repairs, rent brokerage, capital-gains tax, a variable loan rate and HRA/slab-specific tax treatment are not modeled. A ${state.saleCost}% exit cost is deducted from the home value; actual taxes on gains can materially change the result.${cross!==null ? " The first buy lead appears in year "+cross+", but rankings can flip again." : ""}`]
+        ];
+        document.getElementById("insightList").innerHTML=insights.map(x=>`<div class="insight"><strong>${x[0]}</strong><p>${x[1]}</p></div>`).join("");
+      }
+      function updateMetrics(data) {
+        const row=data.rows[horizon], diff=row.buyNet-row.rentNet;
+        const winner=diff>=0?"Buying":"Renting & investing";
+        document.getElementById("recTitle").textContent=winner+" comes out ahead";
+        document.getElementById("recIcon").textContent=diff>=0?"⌂":"↗";
+        document.getElementById("recSub").textContent=`After ${horizon} years, estimated net worth is ${format(Math.max(row.buyNet,row.rentNet))} versus ${format(Math.min(row.buyNet,row.rentNet))}. This depends heavily on your assumptions.`;
+        document.getElementById("recDelta").textContent=compact(Math.abs(diff));
+        document.getElementById("buyNet").textContent=compact(row.buyNet);
+        const realFactor=Math.pow(1+state.generalInflation/100,horizon);
+        document.getElementById("buyDetail").textContent=`${compact(row.buyNet/realFactor)} in today's rupees · ${format(row.totalOwnerCosts)} owner outlay*`;
+        document.getElementById("rentNet").textContent=compact(row.rentNet);
+        document.getElementById("rentDetail").textContent=`${compact(row.rentNet/realFactor)} in today's rupees · ${format(row.totalRentPaid)} rent paid*`;
+        document.getElementById("propertyValue").textContent=compact(row.property);
+        document.getElementById("loanDetail").textContent=`Outstanding loan ${format(row.balance)}`;
+        document.getElementById("corpusValue").textContent=compact(row.corpus);
+        addInsights(data,row);
+
+        const cross=crossover(data.rows);
+        const finalBuy=data.rows[30].buyNet, finalRent=data.rows[30].rentNet;
+        const banner=document.getElementById("breakEven");
+        if (cross!==null) {
+          const buyStays=finalBuy>=finalRent;
+          banner.className="card breakeven "+(buyStays?"buy-lead":"rent-lead");
+          document.getElementById("beIcon").textContent=buyStays?"⌂":"↔";
+          document.getElementById("beTitle").textContent="Buying first pulls ahead in year "+cross;
+          document.getElementById("beSub").textContent=buyStays?"It stays ahead through year 30 under these assumptions.":"Renting regains the lead later — the long-run ranking can flip.";
+          document.getElementById("beYear").textContent="Yr "+cross;
+        } else {
+          const buyAhead=finalBuy>finalRent;
+          banner.className="card breakeven "+(buyAhead?"buy-lead":"rent-lead");
+          document.getElementById("beIcon").textContent=buyAhead?"⌂":"↗";
+          document.getElementById("beTitle").textContent=buyAhead?"Buying is ahead from year one":"No break-even within 30 years";
+          document.getElementById("beSub").textContent=buyAhead?"The buy scenario never falls behind in this projection.":"Renting stays ahead for the full projection. Try higher appreciation or lower returns to test the flip.";
+          document.getElementById("beYear").textContent=buyAhead?"—":"30y+";
+        }
+
+        document.querySelectorAll(".horizon-btn").forEach(btn=>btn.classList.toggle("active",Number(btn.dataset.years)===horizon));
+        document.getElementById("milestoneGrid").innerHTML=[5,10,15,20,30].map(y=>{
+          const r=data.rows[y],buyAhead=r.buyNet>=r.rentNet;
+          return `<div class="milestone"><div class="milestone-year">Year ${y}</div><div class="milestone-row"><span>Buy</span><strong>${compact(r.buyNet)}</strong></div><div class="milestone-row rent"><span>Rent</span><strong>${compact(r.rentNet)}</strong></div><div class="milestone-winner" style="color:${buyAhead?"#237b58":"#4779c7"}">${buyAhead?"Buying ahead":"Renting ahead"}</div></div>`;
+        }).join("");
+        const body=document.getElementById("projectionBody");
+        const years=Array.from({length:horizon},(_,i)=>i+1);
+        body.innerHTML=years.map(y=>{
+          const r=data.rows[y],selected=y===horizon;
+          return `<tr class="${selected?"selected":""}"><td>${y}${selected?" · selected":""}</td><td>${compact(r.property)}</td><td>${compact(r.balance)}</td><td>${compact(r.annualInterest)}</td><td>${compact(r.annualPrincipal)}</td><td class="buy">${compact(r.buyNet)}</td><td>${compact(r.totalOwnerCosts)}</td><td>${compact(r.totalRentPaid)}</td><td>${compact(r.corpus)}</td><td class="rent">${compact(r.rentNet)}</td></tr>`;
+        }).join("");
+      }
+      function drawChart(rows) {
+        const svg=document.getElementById("chart"), wrap=svg.parentElement;
+        const width=Math.max(300,Math.round(wrap.clientWidth)),height=Math.max(180,Math.round(wrap.clientHeight));
+        const pad={left:50,right:14,top:15,bottom:29},plotW=width-pad.left-pad.right,plotH=height-pad.top-pad.bottom;
+        const maxX=30, maxY=Math.max(1000000,...rows.map(r=>Math.max(r.buyNet,r.rentNet)))*1.08;
+        const x=year=>pad.left+year/maxX*plotW,y=value=>pad.top+(1-value/maxY)*plotH;
+        const ticks=4;
+        let content="";
+        for(let i=0;i<=ticks;i++){
+          const val=maxY*i/ticks, yy=y(val);
+          content+=`<line x1="${pad.left}" y1="${yy}" x2="${width-pad.right}" y2="${yy}" stroke="#edf1ed" stroke-width="1"/>`;
+          content+=`<text x="${pad.left-8}" y="${yy+3}" text-anchor="end" fill="#8a948d" font-size="9">${compact(val)}</text>`;
+        }
+        [0,5,10,15,20,25,30].forEach(t=>{const xx=x(t);content+=`<text x="${xx}" y="${height-7}" text-anchor="middle" fill="#89938c" font-size="9">${t}y</text>`;});
+        function line(key,color) {
+          const d=rows.map((r,i)=>`${i?"L":"M"}${x(r.year).toFixed(1)},${y(r[key]).toFixed(1)}`).join(" ");
+          return `<path d="${d}" fill="none" stroke="${color}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>`;
+        }
+        content+=line("buyNet","#237b58")+line("rentNet","#4779c7");
+        const cross=crossover(rows);
+        if(cross!==null){
+          content+=`<line x1="${x(cross)}" y1="${pad.top}" x2="${x(cross)}" y2="${height-pad.bottom}" stroke="#e3a456" stroke-dasharray="4 3"/>`;
+          const anchor=cross>24?"end":"start";
+          content+=`<text x="${cross>24?x(cross)-6:x(cross)+6}" y="${pad.top+11}" text-anchor="${anchor}" fill="#b97e34" font-size="9">Break-even · Yr ${cross}</text>`;
+        }
+        const chosen=rows[horizon];
+        content+=`<line x1="${x(horizon)}" y1="${pad.top}" x2="${x(horizon)}" y2="${height-pad.bottom}" stroke="#aab5ac" stroke-dasharray="3 4"/>`;
+        content+=`<circle cx="${x(horizon)}" cy="${y(chosen.buyNet)}" r="4.3" fill="#fff" stroke="#237b58" stroke-width="2.5"/><circle cx="${x(horizon)}" cy="${y(chosen.rentNet)}" r="4.3" fill="#fff" stroke="#4779c7" stroke-width="2.5"/>`;
+        content+=`<rect x="${pad.left}" y="${pad.top}" width="${plotW}" height="${plotH}" fill="transparent" data-chart-hit="true"/>`;
+        svg.setAttribute("viewBox",`0 0 ${width} ${height}`);svg.innerHTML=content;
+        svg.onmousemove=(event)=>{
+          const box=svg.getBoundingClientRect(),svgX=(event.clientX-box.left)*width/box.width;
+          const year=Math.max(0,Math.min(30,Math.round((svgX-pad.left)/plotW*maxX)));
+          const r=rows[year];if(!r)return;
+          const tip=document.getElementById("chartTooltip");tip.style.display="block";tip.innerHTML=`Year ${year}<br><span style="color:#8fdbac">● Buy equity: ${compact(r.buyNet)}</span><br><span style="color:#a7c7ff">● Rent portfolio: ${compact(r.rentNet)}</span>`;
+          const left=Math.max(3,Math.min(box.width-150,svgX+10));tip.style.left=left+"px";tip.style.top=Math.max(0,pad.top+(1-Math.max(r.buyNet,r.rentNet)/maxY)*plotH-12)+"px";
+        };
+        svg.onmouseleave=()=>{document.getElementById("chartTooltip").style.display="none";};
+      }
+      function drawGapChart(rows) {
+        const svg=document.getElementById("gapChart"), wrap=svg.parentElement;
+        const width=Math.max(300,Math.round(wrap.clientWidth)),height=Math.max(140,Math.round(wrap.clientHeight));
+        const pad={left:52,right:14,top:12,bottom:24},plotW=width-pad.left-pad.right,plotH=height-pad.top-pad.bottom;
+        const diffs=rows.map(r=>r.buyNet-r.rentNet);
+        const maxAbs=Math.max(1000000,...diffs.map(d=>Math.abs(d)))*1.12;
+        const x=year=>pad.left+year/30*plotW;
+        const y=v=>pad.top+(1-(v+maxAbs)/(2*maxAbs))*plotH;
+        const zeroY=y(0);
+        let content=`<defs><clipPath id="gapAbove"><rect x="${pad.left}" y="${pad.top}" width="${plotW}" height="${Math.max(0,zeroY-pad.top)}"/></clipPath><clipPath id="gapBelow"><rect x="${pad.left}" y="${zeroY}" width="${plotW}" height="${Math.max(0,height-pad.bottom-zeroY)}"/></clipPath></defs>`;
+        [maxAbs,0,-maxAbs].forEach(v=>{
+          const yy=y(v);
+          content+=`<line x1="${pad.left}" y1="${yy}" x2="${width-pad.right}" y2="${yy}" stroke="${v===0?"#b9c5bb":"#edf1ed"}" stroke-width="${v===0?1.2:1}"/>`;
+          content+=`<text x="${pad.left-8}" y="${yy+3}" text-anchor="end" fill="#8a948d" font-size="9">${v===0?"0":compact(v)}</text>`;
+        });
+        [0,5,10,15,20,25,30].forEach(t=>{content+=`<text x="${x(t)}" y="${height-6}" text-anchor="middle" fill="#89938c" font-size="9">${t}y</text>`;});
+        const linePath=rows.map((r,i)=>`${i?"L":"M"}${x(r.year).toFixed(1)},${y(r.buyNet-r.rentNet).toFixed(1)}`).join(" ");
+        const areaPath=`M${x(0).toFixed(1)},${zeroY.toFixed(1)} `+rows.map(r=>`L${x(r.year).toFixed(1)},${y(r.buyNet-r.rentNet).toFixed(1)}`).join(" ")+` L${x(30).toFixed(1)},${zeroY.toFixed(1)} Z`;
+        content+=`<path d="${areaPath}" fill="#237b58" opacity=".14" clip-path="url(#gapAbove)"/>`;
+        content+=`<path d="${areaPath}" fill="#bd5b49" opacity=".14" clip-path="url(#gapBelow)"/>`;
+        content+=`<path d="${linePath}" fill="none" stroke="#4a5b50" stroke-width="2.2" stroke-linejoin="round"/>`;
+        const cross=crossover(rows);
+        if(cross!==null) content+=`<circle cx="${x(cross)}" cy="${zeroY}" r="4" fill="#fff" stroke="#e3a456" stroke-width="2.5"/>`;
+        const chosen=rows[horizon],cy=y(chosen.buyNet-chosen.rentNet);
+        content+=`<line x1="${x(horizon)}" y1="${pad.top}" x2="${x(horizon)}" y2="${height-pad.bottom}" stroke="#aab5ac" stroke-dasharray="3 4"/>`;
+        content+=`<circle cx="${x(horizon)}" cy="${cy}" r="4" fill="${chosen.buyNet>=chosen.rentNet?"#237b58":"#4779c7"}" stroke="#fff" stroke-width="2"/>`;
+        svg.setAttribute("viewBox",`0 0 ${width} ${height}`);svg.innerHTML=content;
+        svg.onmousemove=(event)=>{
+          const box=svg.getBoundingClientRect(),svgX=(event.clientX-box.left)*width/box.width;
+          const year=Math.max(0,Math.min(30,Math.round((svgX-pad.left)/plotW*30)));
+          const r=rows[year];if(!r)return;
+          const gap=r.buyNet-r.rentNet;
+          const tip=document.getElementById("gapTooltip");tip.style.display="block";
+          tip.innerHTML=`Year ${year}<br><span style="color:${gap>=0?"#8fdbac":"#ffb3a4"}">● ${gap>=0?"Buying ahead by":"Renting ahead by"} ${compact(Math.abs(gap))}</span>`;
+          tip.style.left=Math.max(3,Math.min(box.width-165,svgX+10))+"px";
+          tip.style.top=Math.max(0,(event.clientY-box.top)-36)+"px";
+        };
+        svg.onmouseleave=()=>{document.getElementById("gapTooltip").style.display="none";};
+      }
+      function calculate() {
+        const data=simulate();projection=data.rows;updateMetrics(data);drawChart(data.rows);drawGapChart(data.rows);
+      }
+      document.getElementById("strategy").addEventListener("change",event=>{
+        const preset=presets[event.target.value];
+        if(preset){Object.assign(state,preset);syncAllocationUI();}
+        calculate();
+      });
+      allocKeys.forEach(k=>document.getElementById(k).addEventListener("input",e=>setAllocation(k,e.target.value)));
+      returnKeys.forEach(k=>document.getElementById(k).addEventListener("change",e=>{
+        const v=Math.min(20,Math.max(0,Number(e.target.value)||0));
+        state[k]=v;e.target.value=v;
+        document.getElementById("strategy").value="custom";
+        calculate();
+      }));
+      document.querySelectorAll(".horizon-btn").forEach(btn=>btn.addEventListener("click",()=>{horizon=Number(btn.dataset.years);calculate();}));
+      document.getElementById("resetBtn").addEventListener("click",()=>{
+        Object.assign(state,defaults);document.getElementById("strategy").value="balanced";
+        config.forEach(f=>{const el=document.getElementById(f.id),num=document.getElementById(f.id+"Value");if(el){el.value=state[f.id];num.value=f.type==="money"?Math.round(state[f.id]):state[f.id].toFixed(f.digits||0);updateField(f.id);}});
+        syncAllocationUI();syncDownCap();horizon=20;calculate();
+      });
+      renderFields(homeIds,"homeFields");renderFields(costIds,"costFields");renderFields(investIds,"investFields");
+      syncDownCap();syncAllocationUI();calculate();
+      window.addEventListener("resize",()=>{drawChart(projection);drawGapChart(projection);});
+    })();
+  </script>
+</body>
+</html>
